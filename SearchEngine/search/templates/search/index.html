@@ -1,0 +1,26 @@
+{% include 'search/navbar.html' %}
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Search Engine</title>
+</head>
+<body>
+
+<div class="container" align="center">
+
+    <img src="{% static 'search/images/logoSearchEngine.jpg' %}" width="400" height="300"></img>
+    <form class="container my-2 my-lg-2" action="{% url 'result' %}" method="post">
+        {% csrf_token %}
+            <input class="form-control mr-lg-2" type="search" placeholder="Search" aria-label="Search" name='search'><br>
+            <input type="checkbox" name="URL" > Search by URL <br>
+            <button style="margin:16px ;" class="btn btn-outline-success btn-lg" type="submit">Search</button>
+
+        </form>
+</div>
+
+
+
+</body>
+</html>
