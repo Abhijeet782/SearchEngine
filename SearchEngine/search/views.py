@@ -43,14 +43,14 @@ def result(request):
             else:
                 return render(request, 'search/error.html', data)
         else:
-            query=query.replace(".","_")
+            query = query.replace(".", "_")
             data, searchValue = searchOpener(query, header, request)
-            print("Hiiiiii",searchValue)
+            print("Hiiiiii", searchValue)
             if searchValue == 1:
-                context=data
+                context = data
                 return render(request, 'search/error.html', context)
             else:
-                page_html=data
+                page_html = data
                 return HttpResponse(page_html)
 
 
@@ -63,7 +63,10 @@ def extractFromMeta(page_html):
     start_keyword = a.find('"', start + 8)
     end_keyword = a.find('"', start_keyword + 1)
     keywords = a[start_keyword + 1:end_keyword]
-    keywordsList = keywords.split(', ')
+    tempKeywordsList = keywords.split(', ')
+    keywordsList=[]
+    for i in tempKeywordsList:
+        keywordsList.append(i.replace('.','_'))
     return keywordsList
 
 
@@ -78,28 +81,15 @@ def urlOpener(query, header, request):
         resp = urllib.request.urlopen(req)
         page_html = resp.read()
         keywordsList = extractFromMeta(page_html)
-        urlList=query.split(".")
-        domain=urlList[1]
 
-        #Error here : Keyword checking again and again whenever runs
-        #
-        #
-        #
-        #
-        #
-        #
-        ##
-        #
-        #
-        #
-        #
-        #
-        #
-
-
-        keyPresent=DB.child("keyword").child(domain).child("keywords").get(keywordsList)
-        DB.child("keyword").child(domain).child("keywords").set(keywordsList)
-        keywordsToDatabase(keywordsList, query)
+        urlList = query.split(".")
+        domain = urlList[1]
+        print(keywordsList)
+        keyPresent = DB.child("keyword").child(domain).get()
+        if keyPresent.val() == None or str(keyPresent.val()) != str(keywordsList):
+            print("None Found")
+            DB.child("keyword").child(domain).set(str(keywordsList))
+            keywordsToDatabase(keywordsList, query)
         return page_html, 1
 
     except urllib.error.URLError as e:
@@ -110,33 +100,42 @@ def urlOpener(query, header, request):
 
 def searchOpener(query, header, request):
     print(query)
-    url = DB.child(query[0]).child(query).get()
-    print(url.val())
-    print("I am here")
-    if url.val() == None:
+    url= DB.child(query[0]).child(query).get()
+    if url.each() == None:
         context = {'error': " "}
         print("Wronggggggg")
         return context, 1
     else:
+        for every in url.each():
+            print(every.key())
+            print(every.value())
+
+
+
+    '''
+    Error : To make search result page as google
+        else:
         print(url.val(), url.key())
         req = urllib.request.Request("https://" + str(url.val()) + "/", headers=header)
-        resp =urllib.request.urlopen(req)
+        resp = urllib.request.urlopen(req)
         page_html = resp.read()
         print("Correct")
         return page_html, 2
+    '''
+
 
 
 def keywordsToDatabase(keywordsList, query):
-
+    domain=query.split(".")
+    DB.child(domain[1][0]).child(domain[1]).child(domain[1]).set(query)
     for key in keywordsList:
-        key = key.replace('.', '_')
         key = key.lower()
         url = DB.child(key[0]).child(key).get()
         print(url.key(), url.val())
         if url.val() is None:
-            DB.child(key[0]).child(key).set(query)
+            DB.child(key[0]).child(key).child(domain[1]).set(query)
         else:
-            updating = {key[0]: str(url.val()) + ", " + query}
+            #updating = {key[0]: str(url.val()) + ", " + query}
             # DB.child("Abhijeet").update(updating)
-            DB.child(key[0]).update(updating)
+            DB.child(key[0]).child(key).child(domain[1]).set(query)
             print("done updating")
